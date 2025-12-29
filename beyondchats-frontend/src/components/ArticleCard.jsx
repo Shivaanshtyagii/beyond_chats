@@ -3,6 +3,7 @@ import axios from 'axios';
 import { useNavigate } from 'react-router-dom'; // 1. Import useNavigate
 import { Wand2, Columns2, CheckCircle, RefreshCw } from 'lucide-react';
 
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001';
 export default function ArticleCard({ article, onRefineComplete }) {
   const [isRefining, setIsRefining] = useState(false);
   const navigate = useNavigate(); // 2. Initialize the navigate function
@@ -12,7 +13,7 @@ export default function ArticleCard({ article, onRefineComplete }) {
     setIsRefining(true);
     try {
       // Trigger individual refinement (Phase 2)
-      await axios.post(`http://localhost:5001/api/articles/${article._id}/refine`);
+      await axios.post(`${API_BASE_URL}/api/articles/${article._id}/refine`);
       await onRefineComplete(); 
     } catch (err) {
       console.error("Refinement failed:", err);

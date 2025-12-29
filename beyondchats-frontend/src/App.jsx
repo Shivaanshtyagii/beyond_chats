@@ -1,6 +1,5 @@
-// beyondchats-frontend/src/App.jsx
 import { useEffect, useState } from 'react';
-import { Routes, Route, useNavigate, useParams } from 'react-router-dom'; // Add these
+import { Routes, Route, useNavigate, useParams } from 'react-router-dom';
 import axios from 'axios';
 import Navbar from './components/Navbar';
 import ArticleCard from './components/ArticleCard';
@@ -8,16 +7,25 @@ import SkeletonCard from './components/SkeletonCard';
 import ArticleModal from './components/ArticleModal';
 
 export default function App() {
-  const [articles, setArticles] = useState([]);
+  const [articles, setArticles] = useState([]); // Must stay an empty array
   const [loading, setLoading] = useState(true);
   const [isScraping, setIsScraping] = useState(false);
   const navigate = useNavigate();
 
+  // FIX: This fallback ensures it works even if your .env is broken
+  const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001';
+
   const fetchArticles = async (showLoader = false) => {
     if (showLoader) setLoading(true);
     try {
-      const res = await axios.get('http://localhost:5001/api/articles');
-      setArticles(res.data);
+      const res = await axios.get(`${API_BASE_URL}/api/articles`);
+      
+      // FIX: Only update if the data is a real list (array)
+      if (Array.isArray(res.data)) {
+        setArticles(res.data);
+      } else {
+        console.error("Backend sent something that isn't a list:", res.data);
+      }
     } catch (err) {
       console.error("API Connection Failed:", err);
     } finally {
@@ -28,8 +36,8 @@ export default function App() {
   const handleFetchNew = async () => {
     setIsScraping(true);
     try {
-      await axios.get('http://localhost:5001/api/scrape');
-      await fetchArticles();
+      await axios.get(`${API_BASE_URL}/api/scrape`);
+      await fetchArticles(); 
     } catch (err) {
       console.error("Scrape failed:", err);
     } finally {
@@ -55,11 +63,11 @@ export default function App() {
           {loading ? (
             [...Array(6)].map((_, i) => <SkeletonCard key={i} />)
           ) : (
-            articles.map(article => (
+            // FIX: Add a simple check before mapping
+            articles && Array.isArray(articles) && articles.map(article => (
               <ArticleCard 
                 key={article._id} 
                 article={article} 
-                onOpen={() => navigate(`/article/${article._id}`)} // Navigate to URL
                 onRefineComplete={fetchArticles} 
               />
             ))
@@ -67,8 +75,9 @@ export default function App() {
         </div>
       </main>
 
-      {/* Define the Route for the Modal */}
+      {/* FIX: Define all possible paths so the "No routes matched" warning goes away */}
       <Routes>
+        <Route path="/" element={null} />
         <Route 
           path="/article/:id" 
           element={<ModalContainer articles={articles} onClose={() => navigate('/')} />} 
@@ -78,7 +87,6 @@ export default function App() {
   );
 }
 
-// Helper component to handle finding the article from the URL params
 function ModalContainer({ articles, onClose }) {
   const { id } = useParams();
   const article = articles.find(a => a._id === id);
