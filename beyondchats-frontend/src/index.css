@@ -1,0 +1,32 @@
+@import "tailwindcss";
+
+/* Keep your custom shimmer and body styles below this line */
+body {
+  @apply bg-[#F9FBFF] text-slate-900 antialiased font-sans;
+}
+
+.shimmer {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.6) 50%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer-animation 2s infinite linear;
+}
+
+@keyframes shimmer-animation {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+/* Add this to the bottom of your src/index.css */
+.prose h2 {
+  @apply text-slate-800 font-bold text-lg mt-4 mb-2;
+}
+.prose p {
+  @apply mb-3 leading-relaxed;
+}
+.prose ul {
+  @apply list-disc ml-5 mb-4 space-y-1;
+}
