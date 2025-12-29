@@ -1,5 +1,6 @@
 const { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } = require("@google/generative-ai");
-require('dotenv').config({ path: '../../.env' });
+const path = require('path');
+require('dotenv').config({ path: path.join(__dirname, '../../.env') });
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
