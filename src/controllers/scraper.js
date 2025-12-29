@@ -8,29 +8,42 @@ exports.scrapeOldest = async (req, res) => {
         const { data } = await axios.get(blogUrl);
         const $ = cheerio.load(data);
 
-        // 1. Find the last page number from pagination [cite: 9]
-        // Usually, the 'last' page is the second-to-last item in the pagination list
         const lastPageLink = $('.page-numbers').not('.next').last().text();
         const oldestPageUrl = `${blogUrl}page/${lastPageLink}/`;
 
-        // 2. Scrape that specific page
         const pageRes = await axios.get(oldestPageUrl);
         const $$ = cheerio.load(pageRes.data);
         
-        const articles = [];
-        // Extract the last 5 (oldest) articles on that page [cite: 9]
+        const articleLinks = [];
         $$('article').slice(-5).each((i, el) => {
-            articles.push({
+            articleLinks.push({
                 title: $$(el).find('.entry-title a').text().trim(),
                 originalUrl: $$(el).find('.entry-title a').attr('href'),
-                content: "Original blog content placeholder..." 
             });
         });
 
-        // 3. Save to MongoDB [cite: 11]
-        const savedArticles = await Article.insertMany(articles);
+        // NEW: Visit each link to scrape the actual raw text
+        const finalArticles = [];
+        for (const item of articleLinks) {
+            const detailRes = await axios.get(item.originalUrl);
+            const $detail = cheerio.load(detailRes.data);
+            
+            // Extract all paragraph text from the blog body
+            const rawText = $detail('.entry-content p, .post-content p')
+                .map((i, el) => $detail(el).text())
+                .get()
+                .join('\n\n');
+
+            finalArticles.push({
+                ...item,
+                content: rawText || "Content could not be extracted."
+            });
+        }
+
+        // Save to MongoDB (using insertMany)
+        const savedArticles = await Article.insertMany(finalArticles);
         res.status(200).json({ 
-            message: "Successfully scraped 5 oldest articles", 
+            message: "Phase 1 Complete: Real content scraped", 
             count: savedArticles.length 
         });
     } catch (error) {

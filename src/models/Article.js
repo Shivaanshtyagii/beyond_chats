@@ -1,13 +1,15 @@
 const mongoose = require('mongoose');
 
-const ArticleSchema = new mongoose.Schema({
+const articleSchema = new mongoose.Schema({
     title: { type: String, required: true },
-    content: { type: String, required: true },
-    originalUrl: { type: String },
-    // Fields for Phase 2 (LLM Enhancement)
+    originalUrl: { type: String, required: true, unique: true },
+    // Phase 1: The actual raw text from the blog
+    content: { type: String, required: true }, 
+    // Phase 2: The Gemini-refined technical article
+    updatedContent: { type: String, default: "" }, 
     isUpdated: { type: Boolean, default: false },
-    updatedContent: { type: String, default: null },
-    references: [{ type: String }] // To store the two Google Search links [cite: 22]
-}, { timestamps: true });
+    references: [{ type: String }], // External links found by AI
+    createdAt: { type: Date, default: Date.now }
+});
 
-module.exports = mongoose.model('Article', ArticleSchema);
+module.exports = mongoose.model('Article', articleSchema);
