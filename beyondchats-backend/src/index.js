@@ -10,7 +10,15 @@ const app = express();
 connectDB();
 
 // Middleware
-app.use(cors());
+app.use(cors({
+  // Allows your live Vercel site OR your local development environment
+  origin: [
+    process.env.FRONTEND_URL, 
+    "http://localhost:5173"
+  ],
+  methods: ["GET", "POST", "PUT", "DELETE"],
+  credentials: true
+}));
 app.use(express.json()); // Allows the server to accept JSON data in requests
 
 // Routes
