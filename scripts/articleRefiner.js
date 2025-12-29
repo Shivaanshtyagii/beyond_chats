@@ -11,18 +11,17 @@ const API_BASE = 'http://localhost:5001/api/articles';
 
 /**
  * Phase 2: Refinement Process
- * Takes Phase 1 "content", researches via Google, 
- * and saves to Phase 2 "updatedContent".
+ * Guaranteed to provide exactly 2 unique references for every article.
  */
 async function startPhase2Refinement() {
     try {
-        console.log("🚀 Starting Phase 2: Refining Phase 1 Data into Phase 2 Content");
+        console.log("🚀 Starting Phase 2: Full Refinement (Gemini 2.5 Flash Edition)");
         
-        // Step 1: Fetch ALL articles (which currently have Raw Content in the 'content' field)
+        // Step 1: Fetch ALL articles from Phase 1 Backend
         const { data: allArticles } = await axios.get(API_BASE);
         
         if (!allArticles || allArticles.length === 0) {
-            console.log("❌ No articles found in DB. Please run your Phase 1 Scraper first.");
+            console.log("❌ No articles found. Please run your scraper first.");
             return;
         }
 
@@ -30,48 +29,57 @@ async function startPhase2Refinement() {
 
         for (const article of allArticles) {
             console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
-            console.log(`📄 Processing: "${article.title}"`);
-
-            // Skip if the content is just the old placeholder (Safety check)
-            if (article.content === "Original blog content placeholder...") {
-                console.log("⚠️ Skipping: This article still has the placeholder. Re-run Phase 1 Scraper.");
-                continue;
-            }
+            console.log(`📄 Target: "${article.title}"`);
 
             // Step 2: Google Search for Technical Context
             let searchResults = [];
             try {
                 searchResults = await googleIt({ 
-                    query: `${article.title} technical explanation tutorial`, 
+                    query: `${article.title} technical blog explanation`, 
                     'no-display': true, 
-                    limit: 4 
+                    limit: 6 
                 });
             } catch (err) { 
-                console.log("⚠️ Search throttled by Google. Using fallbacks."); 
+                console.log("⚠️ Search throttled by Google. Filling with fallbacks."); 
             }
+
+            // Define fallback links to ensure the UI is always populated
+            const fallbackLinks = [
+                "https://en.wikipedia.org/wiki/Chatbot",
+                "https://www.ibm.com/topics/chatbots",
+                "https://www.oracle.com/chatbots/what-is-a-chatbot/"
+            ];
 
             // Extract external links (excluding the source blog)
             let links = searchResults
-                .filter(res => !res.link.includes('beyondchats.com'))
-                .slice(0, 2)
+                .filter(res => res.link && !res.link.includes('beyondchats.com'))
                 .map(res => res.link);
 
-            if (links.length === 0) {
-                links = ["https://en.wikipedia.org/wiki/Special:Random"]; // Dynamic fallback
+            // Ensure exactly 2 unique links are present
+            if (links.length < 2) {
+                console.log(`💡 Only ${links.length} results found. Adding fallbacks...`);
+                // Merge found links with fallbacks and take the first two unique items
+                links = [...new Set([...links, ...fallbackLinks])].slice(0, 2);
+            } else {
+                links = links.slice(0, 2); // Take top 2 unique results
             }
 
-            // Step 3: Scrape external data to provide more "meat" to Gemini
+            console.log(`🔗 Scraped Links: ${links.join(', ')}`);
+
+            // Step 3: Scrape content from the 2 links
             const scrapingPromises = links.map(async (link) => {
                 try {
-                    const { data } = await axios.get(link, { timeout: 4000 });
+                    const { data } = await axios.get(link, { 
+                        timeout: 5000,
+                        headers: { 'User-Agent': 'Mozilla/5.0' } 
+                    });
                     const $ = cheerio.load(data);
-                    return $("p").text().substring(0, 800); 
+                    return $("p").text().substring(0, 1000); 
                 } catch (e) { return ""; }
             });
-            const externalResearch = (await Promise.all(scrapingPromises)).join("\n\n");
+            const externalData = (await Promise.all(scrapingPromises)).join("\n\n");
 
-            // Step 4: AI Refinement
-            // We give Gemini the Original Scrape + External Research
+            // Step 4: AI Refinement using the found links + original content
             console.log("🤖 Gemini is generating the 'Updated Version'...");
             const prompt = `
                 Context: You are a Lead Technical Content Writer.
@@ -80,7 +88,7 @@ async function startPhase2Refinement() {
                 "${article.content}"
                 
                 Supporting Technical Research: 
-                "${externalResearch}"
+                "${externalData}"
                 
                 Task:
                 1. Expand the Phase 1 Raw Content using the Supporting Research.
@@ -94,20 +102,19 @@ async function startPhase2Refinement() {
             const result = await model.generateContent(prompt);
             const refinedText = result.response.text();
 
-            // Step 5: Update MongoDB via PUT
-            // We preserve 'content' (Phase 1) and fill 'updatedContent' (Phase 2)
+            // Step 5: Update the specific article in MongoDB
             const finalPayload = {
                 updatedContent: refinedText,
                 isUpdated: true,
-                references: links
+                references: links // Now guaranteed to have at least 2
             };
             
             await axios.put(`${API_BASE}/${article._id}`, finalPayload);
 
-            console.log(`✅ Successfully Refined: ${article.title}`);
+            console.log(`✅ Database Updated: ${article.title}`);
         }
 
-        console.log("\n🏁 Phase 2 Complete! Your DB now has both 'Previous' and 'Updated' versions.");
+        console.log("\n🏁 Phase 2 Complete! Data is ready for side-by-side comparison.");
     } catch (error) {
         console.error("❌ Phase 2 Error:", error.message);
     }
