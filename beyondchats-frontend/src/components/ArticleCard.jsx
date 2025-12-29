@@ -1,9 +1,11 @@
 import { useState } from 'react';
 import axios from 'axios';
+import { useNavigate } from 'react-router-dom'; // 1. Import useNavigate
 import { Wand2, Columns2, CheckCircle, RefreshCw } from 'lucide-react';
 
-export default function ArticleCard({ article, onOpen, onRefineComplete }) {
+export default function ArticleCard({ article, onRefineComplete }) {
   const [isRefining, setIsRefining] = useState(false);
+  const navigate = useNavigate(); // 2. Initialize the navigate function
 
   const handleRefine = async (e) => {
     e.stopPropagation();
@@ -11,7 +13,7 @@ export default function ArticleCard({ article, onOpen, onRefineComplete }) {
     try {
       // Trigger individual refinement (Phase 2)
       await axios.post(`http://localhost:5001/api/articles/${article._id}/refine`);
-      await onRefineComplete(); // Refresh state so modal gets new data
+      await onRefineComplete(); 
     } catch (err) {
       console.error("Refinement failed:", err);
     } finally {
@@ -46,8 +48,9 @@ export default function ArticleCard({ article, onOpen, onRefineComplete }) {
           {isRefining ? "Gemini is writing..." : article.isUpdated ? "AI Refinement Done" : "Refine with AI"}
         </button>
 
+        {/* 3. Update this button to navigate to the article's unique URL */}
         <button 
-          onClick={onOpen}
+          onClick={() => navigate(`/article/${article._id}`)}
           className="w-full py-3 border-2 border-slate-900 text-slate-900 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-slate-900 hover:text-white transition-all"
         >
           <Columns2 size={16} /> Compare Side-by-Side

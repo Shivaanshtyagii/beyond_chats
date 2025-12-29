@@ -1,4 +1,6 @@
+// beyondchats-frontend/src/App.jsx
 import { useEffect, useState } from 'react';
+import { Routes, Route, useNavigate, useParams } from 'react-router-dom'; // Add these
 import axios from 'axios';
 import Navbar from './components/Navbar';
 import ArticleCard from './components/ArticleCard';
@@ -9,9 +11,8 @@ export default function App() {
   const [articles, setArticles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isScraping, setIsScraping] = useState(false);
-  const [selectedArticleId, setSelectedArticleId] = useState(null);
+  const navigate = useNavigate();
 
-  // Fetch articles from the database
   const fetchArticles = async (showLoader = false) => {
     if (showLoader) setLoading(true);
     try {
@@ -24,12 +25,11 @@ export default function App() {
     }
   };
 
-  // Trigger Phase 1: Fetch 5 oldest articles
   const handleFetchNew = async () => {
     setIsScraping(true);
     try {
       await axios.get('http://localhost:5001/api/scrape');
-      await fetchArticles(); // Refresh list after scraping
+      await fetchArticles();
     } catch (err) {
       console.error("Scrape failed:", err);
     } finally {
@@ -38,9 +38,6 @@ export default function App() {
   };
 
   useEffect(() => { fetchArticles(true); }, []);
-
-  // Find the full article object for the modal based on ID
-  const selectedArticle = articles.find(a => a._id === selectedArticleId);
 
   return (
     <div className="min-h-screen bg-[#F9FBFF] pb-20 font-sans">
@@ -62,7 +59,7 @@ export default function App() {
               <ArticleCard 
                 key={article._id} 
                 article={article} 
-                onOpen={() => setSelectedArticleId(article._id)}
+                onOpen={() => navigate(`/article/${article._id}`)} // Navigate to URL
                 onRefineComplete={fetchArticles} 
               />
             ))
@@ -70,12 +67,21 @@ export default function App() {
         </div>
       </main>
 
-      {selectedArticle && (
-        <ArticleModal 
-          article={selectedArticle} 
-          onClose={() => setSelectedArticleId(null)} 
+      {/* Define the Route for the Modal */}
+      <Routes>
+        <Route 
+          path="/article/:id" 
+          element={<ModalContainer articles={articles} onClose={() => navigate('/')} />} 
         />
-      )}
+      </Routes>
     </div>
   );
+}
+
+// Helper component to handle finding the article from the URL params
+function ModalContainer({ articles, onClose }) {
+  const { id } = useParams();
+  const article = articles.find(a => a._id === id);
+  if (!article) return null;
+  return <ArticleModal article={article} onClose={onClose} />;
 }
