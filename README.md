@@ -33,3 +33,45 @@ graph TD
     %% UI Update
     C -->|7. API Response| B
     B -->|8. Render Update| A
+
+# BeyondChats
+
+## Setup
+**Backend**
+```bash
+cd beyondchats-backend
+npm install
+```
+`.env`
+```env
+PORT=5001
+MONGO_URI=<uri>
+GEMINI_API_KEY=<key>
+```
+```bash
+npm start
+npm run dev # dev
+```
+
+**Frontend**
+```bash
+cd ../beyondchats-frontend
+npm install
+```
+`.env`
+```env
+VITE_API_URL=http://localhost:5001
+```
+```bash
+npm run dev
+```
+
+## Features
+AI refine (Gemini) • Scrape (Cheerio) • MongoDB • React • Tailwind • Axios
+
+## Run
+Backend → 5001  
+Frontend → 5173
+
+## Author
+Shivansh Tyagi, ECE SVNIT ’26
