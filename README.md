@@ -34,5 +34,3 @@ graph TD
     C -->|7. API Response| B
     B -->|8. Render Update| A
 
-
-Shivansh Tyagi, ECE SVNIT ’26
