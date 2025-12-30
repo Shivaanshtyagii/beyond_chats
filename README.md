@@ -1,36 +1,72 @@
 # BeyondChats | Knowledge Evolution 🚀
 
-**BeyondChats** is an AI-powered platform designed to transform dense, technical blog posts into structured, actionable insights. By leveraging the **Gemini 1.5 Flash** model, the system automates the extraction of key concepts, providing users with a side-by-side comparison of original content versus AI-enhanced intelligence.
+**BeyondChats** converts dense technical blogs into structured insights using **Gemini 2.0 Flash**. Users compare original vs AI-enhanced output.
 
 ---
 
-## 🔗 Live Demo
-* **Frontend Application:** [https://beyondchats-frontend-sepia.vercel.app](https://beyondchats-frontend-sepia.vercel.app)
-* **Backend API:** [https://beyondchats-backend-lrwz.onrender.com](https://beyondchats-backend-lrwz.onrender.com)
+## Live Demo
+- Frontend: https://beyondchats-frontend-sepia.vercel.app  
+- Backend: https://beyondchats-backend-lrwz.onrender.com
 
 ---
 
-## 🏗️ Project Architecture & Data Flow
+## Setup
 
-The application utilizes a decoupled MERN architecture with an integrated AI processing pipeline.
+### Backend
+```bash
+cd beyondchats-backend
+npm install
+```
+`.env`
+```env
+PORT=5001
+MONGO_URI=<uri>
+GEMINI_API_KEY=<key>
+```
+```bash
+npm start
+npm run dev # dev mode
+```
 
-### Architecture Diagram
+### Frontend
+```bash
+cd ../beyondchats-frontend
+npm install
+```
+`.env`
+```env
+VITE_API_URL=your backend url or localhost url
+```
+```bash
+npm run dev
+```
+
+---
+
+## Architecture
 ```mermaid
 graph TD
-    A[User/Client] -->|Triggers Scrape/Refine| B(React Frontend)
-    B -->|API Requests| C(Express Backend)
-    
-    %% Scraping Flow
-    C -->|1. Scrape Request| D[External Blogs/URLs]
-    D -->|2. Raw HTML| C
-    C -->|3. Initial Save| E[(MongoDB Atlas)]
-    
-    %% Refinement Flow
-    C <-->|4. Read Raw| E
-    C -->|5. Prompt Request| F[Google Gemini AI]
-    F -->|6. Structured Insights or AI Refined| C
-    
-    %% UI Update
-    C -->|7. API Response| B
-    B -->|8. Render Update| A
+    A[User] -->|Scrape/Refine| B(React)
+    B -->|API| C(Express)
+    C -->|HTML| D[Blogs]
+    C -->|DB| E[(MongoDB)]
+    C -->|Prompt| F[Gemini AI]
+    F -->|Insights| C
+    C -->|Response| B
+    B -->|Render| A
+```
 
+---
+
+## Features
+AI insights • Blog scraping • Original vs Enhanced view
+
+---
+
+## Tech
+MERN • Cheerio • Gemini AI • Tailwind • Axios • Lucide Icons
+
+---
+
+## Author
+**Shivansh Tyagi** — SVNIT ’26
