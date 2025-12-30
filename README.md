@@ -26,9 +26,9 @@ graph TD
     C -->|3. Initial Save| E[(MongoDB Atlas)]
     
     %% Refinement Flow
-    C <-->|4. Read Raw / Write Refined| E
+    C <-->|4. Read Raw| E
     C -->|5. Prompt Request| F[Google Gemini AI]
-    F -->|6. Structured Insights| C
+    F -->|6. Structured Insights or AI Refined| C
     
     %% UI Update
     C -->|7. API Response| B
