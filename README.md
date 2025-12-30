@@ -17,12 +17,19 @@ The application utilizes a decoupled MERN architecture with an integrated AI pro
 ### Architecture Diagram
 ```mermaid
 graph TD
-    A[User/Client] -->|Triggers Actions| B(React Frontend)
+    A[User/Client] -->|Triggers Scrape/Refine| B(React Frontend)
     B -->|API Requests| C(Express Backend)
-    C -->|Axios/Cheerio| D[External Blogs/URLs]
-    D -->|Raw Data| C
-    C -->|Store/Fetch| E[(MongoDB Atlas)]
-    C -->|Prompt Engineering| F[Google Gemini AI]
-    F -->|Refined Insights| C
-    C -->|Surgical Update| E
-    E -->|Real-time Updates| B
+    
+    %% Scraping Flow
+    C -->|1. Scrape Request| D[External Blogs/URLs]
+    D -->|2. Raw HTML| C
+    C -->|3. Initial Save| E[(MongoDB Atlas)]
+    
+    %% Refinement Flow
+    C <-->|4. Read Raw / Write Refined| E
+    C -->|5. Prompt Request| F[Google Gemini AI]
+    F -->|6. Structured Insights| C
+    
+    %% UI Update
+    C -->|7. API Response| B
+    B -->|8. Render Update| A
